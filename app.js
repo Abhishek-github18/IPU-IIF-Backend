@@ -165,8 +165,8 @@ app.post("/addevents",auth, (req, res) => {
 
   //   }
   // });
-  if(req.files.image==="" || req.body.title==="" || req.body.content===""|| req.body.date===""){
-    res.status(402).send(alert("Fill all the fields as they all are required"));
+  if(!(req.files.image && req.body.title && req.body.content && req.body.date)){
+    res.status(400).send("All input is required");
   }
 
   let fileUrl = "";

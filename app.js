@@ -59,6 +59,9 @@ var upload = multer({ storage: storage }).single("image");
 app.use(session(sessionOptions));
 app.use(express.json({ limit: "50mb" }));
 app.use(cors());
+
+//create admin loginID and password
+
 app.post("/register", async (req, res) => {
   try {
     // Get user input
@@ -156,7 +159,7 @@ app.get("/events", (req, res) => {
   });
 });
 
-app.post("/addevents",auth, (req, res) => {
+app.post("/addevents", (req, res) => {
   // const { title, content, img } = req.body;
   // const event =new Event ({
   //   title: req.body.title,
@@ -267,7 +270,7 @@ app.get("/patents", async (req, res) => {
   res.status(200).send(patents);
 });
 
-app.post("/addpatents",auth, async (req, res) => {
+app.post("/addpatents", async (req, res) => {
   // const { patentGrantDate, patentNo, patentee } = req.body;
 
   // Validate user input
@@ -323,7 +326,7 @@ app.post("/addpatents",auth, async (req, res) => {
   );
 });
 //to delete a event from the DB
-app.post("/deleteevent", auth, function (req, res) {
+app.post("/deleteevent", function (req, res) {
   const eventTitle = req.body.title; //coz the title of events are unique
   Event.deleteOne({ title: eventTitle }, function (err) {
     if (err) {
@@ -336,7 +339,7 @@ app.post("/deleteevent", auth, function (req, res) {
 
 // add notices in the database ------
 
-app.post("/addnotices",auth, async function (req, res) {
+app.post("/addnotices", async function (req, res) {
   //check if the title of the notice already exist in the database
   const titleOfNotice = req.body.title;
   const oldtitle = await Notice.findOne({ title: titleOfNotice });
@@ -418,7 +421,7 @@ app.post("/contact", async function (req, res) {
   });
 });
 
-app.get("/queries",auth, async function (req, res) {
+app.get("/queries" , async function (req, res) {
   Query.find({}, function (err, foundqueries) {
     if (err) {
       res.send(err);

@@ -338,7 +338,7 @@ app.post("/deleteevent", async function (req, res) {
       res.send(err);
     }
   });
-  
+
   if(deleteCount === 1){
       res.status(200).send("Successfully deleted the event");
   }else{
@@ -398,6 +398,24 @@ app.post("/addnotices", async function (req, res) {
     }
   );
 });
+
+//delete notices from the website
+
+app.post("/deletenotice", async function(req, res){
+  const noticeId = req.body.name; //coz the id of notices are unique
+  console.log(req.body.name);
+  const deleteCount = await Notice.deleteOne({ _id:noticeId }, function (err) {
+    if (err) {
+      res.send(err);
+    }
+  });
+
+  if(deleteCount === 1){
+      res.status(200).send("Successfully deleted the notice");
+  }else{
+    res.send("Data is not present in the database");
+  }
+})
 
 //get all the notices details from the database
 app.get("/notices", async function (req, res) {

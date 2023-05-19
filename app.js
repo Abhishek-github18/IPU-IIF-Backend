@@ -2,6 +2,7 @@ require("dotenv").config();
 require("./config/database").connect();
 
 const express = require("express");
+const bodyParser = require('body-parser');
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const session = require("express-session");
@@ -59,9 +60,12 @@ var upload = multer({ storage: storage }).single("image");
 app.use(session(sessionOptions));
 app.use(express.json({ limit: "50mb" }));
 app.use(cors());
+app.use(bodyParser.json());
 
 //create admin loginID and password
-
+app.post("/test", (req, res)=>{
+  console.log(req.body.name);
+})
 app.post("/register", async (req, res) => {
   try {
     // Get user input
@@ -326,15 +330,20 @@ app.post("/addpatents", async (req, res) => {
   );
 });
 //to delete a event from the DB
-app.post("/deleteevent", function (req, res) {
-  const eventTitle = req.body.title; //coz the title of events are unique
-  Event.deleteOne({ title: eventTitle }, function (err) {
+app.post("/deleteevent", async function (req, res) {
+  const eventId = req.body.name; //coz the id of events are unique
+  console.log(req.body.name);
+  const deleteCount = await Event.deleteOne({ _id:eventId }, function (err) {
     if (err) {
       res.send(err);
-    } else {
-      res.send("Successfully deleted the event");
     }
   });
+  
+  if(deleteCount === 1){
+      res.status(200).send("Successfully deleted the event");
+  }else{
+    res.send("Data is not present in the database");
+  }
 });
 
 // add notices in the database ------

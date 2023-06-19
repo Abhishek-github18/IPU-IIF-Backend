@@ -2,7 +2,7 @@ require("dotenv").config();
 require("./config/database").connect();
 
 const express = require("express");
-const bodyParser = require('body-parser');
+const bodyParser = require("body-parser");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const session = require("express-session");
@@ -20,6 +20,7 @@ const auth = require("./middleware/auth");
 const Patent = require("./model/patent");
 const Notice = require("./model/notice");
 const Query = require("./model/query");
+const { log } = require("console");
 
 const app = express();
 app.use(
@@ -62,41 +63,36 @@ app.use(express.json({ limit: "50mb" }));
 app.use(cors());
 app.use(bodyParser.json());
 
+//ejs configuration
+app.set("view engine", "ejs");
+app.use(express.static("public"));
+
 //create admin loginID and password
-app.post("/test", (req, res)=>{
+app.post("/test", (req, res) => {
   console.log(req.body.name);
-})
+});
+
 app.post("/register", async (req, res) => {
   try {
     // Get user input
     const { email, password, key } = req.body;
-
-  
-  
     // Validate user input
-    if (!(email && password && key==="AdminAccessControl")) {
+    if (!(email && password && key === "AdminAccessControl")) {
       res.status(400).send("All input is required");
     }
-
     // check if user already exist
     // Validate if user exist in our database
     const oldUser = await User.findOne({ email });
-
     if (oldUser) {
       return res.status(409).send("User Already Exist. Please Login");
     }
-
     //Encrypt user password
     encryptedPassword = await bcrypt.hash(password, 10);
-
     // Create user in our database
     const user = await User.create({
-      email: email.toLowerCase(), // sanitize: convert email to lowercase
-      
+      email: email.toLowerCase(), // sanitize: convert email to lowercase letter
       password: encryptedPassword,
-
     });
-
     // Create token
     const token = jwt.sign(
       { user_id: user._id, email },
@@ -117,7 +113,7 @@ app.post("/register", async (req, res) => {
 
 app.post("/login", async (req, res) => {
   try {
-    // Get user input
+    // Get user data
     const { email, password } = req.body;
 
     // Validate user input
@@ -126,9 +122,6 @@ app.post("/login", async (req, res) => {
     }
     // Validate if user exist in our database
     const user = await User.findOne({ email });
-    console.log("User:" ,user);
-    console.log("Body:" , req.body);
-    console.log("password: " , user.password);
     if (user && (await bcrypt.compare(password, user.password))) {
       // Create token
       const token = jwt.sign(
@@ -141,10 +134,14 @@ app.post("/login", async (req, res) => {
 
       // save user token
       // user.token = token;
+      console.log("Logged In successfully");
       req.session.user = token;
+      console.log(req.session.user);
 
       // user
-      res.status(200).send(req.session.user);
+      res
+        .status(200)
+        .json({ accessToken: req.session.user, email: user.email });
     }
     //
   } catch (err) {
@@ -163,7 +160,7 @@ app.get("/events", (req, res) => {
   });
 });
 
-app.post("/addevents", (req, res) => {
+app.post("/addevents", auth, (req, res) => {
   // const { title, content, img } = req.body;
   // const event =new Event ({
   //   title: req.body.title,
@@ -172,7 +169,9 @@ app.post("/addevents", (req, res) => {
 
   //   }
   // });
-  if(!(req.files.image && req.body.title && req.body.content && req.body.date)){
+  if (
+    !(req.files.image && req.body.title && req.body.content && req.body.date)
+  ) {
     res.status(400).send("All input is required");
   }
 
@@ -274,14 +273,7 @@ app.get("/patents", async (req, res) => {
   res.status(200).send(patents);
 });
 
-app.post("/addpatents", async (req, res) => {
-  // const { patentGrantDate, patentNo, patentee } = req.body;
-
-  // Validate user input
-  // if (!(patentGrantDate && patentNo && patentee)) {
-  //   res.status(400).send("All input is required");
-  // }
-
+app.post("/addpatents", auth, async (req, res) => {
   // check if same patent no already exist
   // Validate if same patent no. already exist in our database
   const patentno = req.body.patentNo;
@@ -330,25 +322,25 @@ app.post("/addpatents", async (req, res) => {
   );
 });
 //to delete a event from the DB
-app.post("/deleteevent", async function (req, res) {
+app.post("/deleteevent", auth, async function (req, res) {
   const eventId = req.body.name; //coz the id of events are unique
   console.log(req.body.name);
-  const deleteCount = await Event.deleteOne({ _id:eventId }, function (err) {
+  const deleteCount = await Event.deleteOne({ _id: eventId }, function (err) {
     if (err) {
       res.send(err);
     }
   });
 
-  if(deleteCount === 1){
-      res.status(200).send("Successfully deleted the event");
-  }else{
+  if (deleteCount === 1) {
+    res.status(200).send("Successfully deleted the event");
+  } else {
     res.send("Data is not present in the database");
   }
 });
 
 // add notices in the database ------
 
-app.post("/addnotices", async function (req, res) {
+app.post("/addnotices", auth, async function (req, res) {
   //check if the title of the notice already exist in the database
   const titleOfNotice = req.body.title;
   const oldtitle = await Notice.findOne({ title: titleOfNotice });
@@ -401,21 +393,21 @@ app.post("/addnotices", async function (req, res) {
 
 //delete notices from the website
 
-app.post("/deletenotice", async function(req, res){
+app.post("/deletenotice", auth, async function (req, res) {
   const noticeId = req.body.name; //coz the id of notices are unique
   console.log(req.body.name);
-  const deleteCount = await Notice.deleteOne({ _id:noticeId }, function (err) {
+  const deleteCount = await Notice.deleteOne({ _id: noticeId }, function (err) {
     if (err) {
       res.send(err);
     }
   });
 
-  if(deleteCount === 1){
-      res.status(200).send("Successfully deleted the notice");
-  }else{
+  if (deleteCount === 1) {
+    res.status(200).send("Successfully deleted the notice");
+  } else {
     res.send("Data is not present in the database");
   }
-})
+});
 
 //get all the notices details from the database
 app.get("/notices", async function (req, res) {
@@ -448,13 +440,82 @@ app.post("/contact", async function (req, res) {
   });
 });
 
-app.get("/queries" , async function (req, res) {
+app.get("/queries", auth, async function (req, res) {
   Query.find({}, function (err, foundqueries) {
     if (err) {
       res.send(err);
     } else {
       res.status(200).send(foundqueries);
     }
+  });
+});
+
+//mark query as resolved when admin resolve that
+app.post("/queries/:id", auth, async (req, res) => {
+  const queryId = req.params.id;
+  const username = req.body.username;
+  Query.findOne({ _id: queryId }, async function (err, foundQuery) {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      try {
+        foundQuery.resolve = true;
+        foundQuery.resolvedBy = username;
+        // console.log(foundQuery);
+        await foundQuery.save();
+        res.status(200).json({
+          message: "Query has been resolved",
+        });
+      } catch (err) {
+        res.status(500).json({
+          message:
+            "Backened Server Error due to which at this point this is not resolved!! Try Again!!!",
+        });
+      }
+    }
+  });
+});
+
+//dynamic page rendering
+app.get("/eventdetail/:eventId", (req, res) => {
+  const eventId = req.params.eventId;
+  Event.findOne({ _id: eventId }, function (err, foundevent) {
+    if (err) {
+      res.send(err);
+    } else {
+      res.json(foundevent);
+    }
+  });
+});
+
+//gettotalsumofevents
+app.get("/getdetails", async (req, res) => {
+  try {
+    var totalEvents = await Event.countDocuments({});
+  } catch (error) {
+    console.error(error);
+  }
+  try {
+    var totalpatent = await Patent.countDocuments({});
+  } catch (error) {
+    console.error(error);
+  }
+  try {
+    var totalquery = await Query.countDocuments({});
+  } catch (error) {
+    console.error(error);
+  }
+  try {
+    var totalNotice = await Notice.countDocuments({});
+  } catch (error) {
+    console.error(error);
+  }
+
+  res.status(200).json({
+    totalEvents: totalEvents,
+    totalNotice: totalNotice,
+    totalpatent: totalpatent,
+    totalquery: totalquery,
   });
 });
 

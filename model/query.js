@@ -9,6 +9,14 @@ name: { type: String },
     type: Date,
     default: Date.now,
   },
+  resolve:{
+    type:Boolean,
+    default:false
+  },
+  resolvedBy:{
+    type:String,
+    default:''
+  }
 });
 
 module.exports = mongoose.model("query", querySchema);

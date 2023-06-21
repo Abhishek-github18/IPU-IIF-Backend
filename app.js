@@ -77,9 +77,17 @@ app.post("/register", async (req, res) => {
     // Get user input
     const { email, password, key } = req.body;
     // Validate user input
-    if (!(email && password && key === "AdminAccessControl")) {
+    if (!(email && password )) {
       res.status(400).send("All input is required");
     }
+    var validRegex =/^[a-zA-Z0-9_\.\+-]+@ipu\.ac\.in$/;
+    if (!(email.toLowerCase().match(validRegex))) {  
+      res.status(400).send('Please enter email id provided of ipu domain')
+  } 
+    if(key !== "AdminAccessControl"){
+      res.status(400).send("Key is not valid. Please Enter a valid key provided to you.")
+    }
+   
     // check if user already exist
     // Validate if user exist in our database
     const oldUser = await User.findOne({ email });

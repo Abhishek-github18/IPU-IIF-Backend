@@ -142,6 +142,10 @@ app.post("/login", async (req, res) => {
       res
         .status(200)
         .json({ accessToken: req.session.user, email: user.email });
+    } else {
+      res.status(401).json({
+        message: "Invalid credential",
+      });
     }
     //
   } catch (err) {
@@ -212,55 +216,6 @@ app.post("/addevents", auth, (req, res) => {
       }
     }
   );
-
-  // upload(req, res, (err) => {
-  //   if (err) {
-  //     console.log(err);
-  //   } else {
-  //     const event = new Event({
-  //       title: req.body.title,
-  //       content: req.body.content,
-  //       img: {
-  //         data: fs.readFileSync(
-  //           path.join(__dirname + "/uploads/" + req.file.filename)
-  //         ),
-  //         // data: req.file.filename,
-  //         contentType: "image/png",
-  //       },
-  //       date: req.body.date,
-  //     });
-  //     event.save(function (err, response) {
-  //       if (err) {
-  //         console.log(err);
-  //         res.status(502).send(err);
-  //       } else {
-  //         res.status(200).send(response);
-  //       }
-  //     });
-  //   }
-  // });
-  // console.log(req.body);
-  // var encode_img = obj.img.toString('base64');
-  // var final_img = {
-  //     contentType:req.file.mimetype,
-  //     image:new Buffer.alloc(encode_img,'base64')
-  // };
-
-  // Validate user input
-  // if (!(obj.title && obj.content)) {
-  //   res.status(400).send("All input is required");
-  // }
-
-  // check if user already exist
-  // Validate if user exist in our database
-  // let t = ;
-  // const oldtitle = await Event.findOne({ t });
-
-  // if (oldtitle) {
-  //   return res.status(409).send("Title Already Exist. Please Change");
-  // }
-
-  // Create user in our database
 });
 
 app.get("/patents", async (req, res) => {
